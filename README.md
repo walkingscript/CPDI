@@ -27,8 +27,7 @@ go build -o cpdi cmd/cpdi/main.go
     --min-file-size 100M \
     --max-file-size 1G \
     --exclude-dir-path inner_folder_1:folder_1/inner_folder_2 \
-	--exclude-file-path some_folder/file1.txt \
+    --exclude-file-path some_folder/file1.txt \
     --exclude-common-names any_name:file_name_1:dir_name_1 \
     --verbose
 ```
-
