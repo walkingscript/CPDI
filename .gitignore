@@ -1,4 +1,7 @@
 .idea/
 .vscode/
 bin/
-test_zone/
+data*/
+notes/
+
+Dockerfile

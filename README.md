@@ -1,24 +1,34 @@
-# My Utils Repository
+# CPDI
 
-## rcpd
-
-### Build:
+## Build:
 ```
-go build -o ../../bin/rcpd.exe utils/cmd/rcpd
+go build -o cpdi cmd/cpdi/main.go
 ```
 
-### Using:
+## Using:
+
 ```
-rcpd -src dir_1_src_ -dst dir_2_dst_ -v --min-file-size 1B --max-file-size 1G --exclude-dirs dir_1_src_\\4 .5555 --exclude-files dir_1_src_\\5\\fgh54.txt dir_1_src_\\1\\sfdsdv.txt
+./cpdi \
+	--src-directory data_1 \
+	--dst-directory data2 \
+	--min-file-size 0B \
+	--max-file-size 1G \
+	--exclude-dir-path folder_1/folder_2_excl \
+	--exclude-file-path folder_1/file3_excl.txt \
+	--exclude-common-names do_not_copy \
+	--verbose
 ```
-### Flags:
+
+## Example:
 ```
--src - where dir should be copied from
--dst - where dir should be copied to
--v - verbose output
---min-file-size - if file will be smaller than this size it will not be copied
---max-file-size - if file will be larger than this size it will not be copied
---exclude-dirs - after this param following many dir pathes, they can be absolute, relative, or just as name(for cases if you don't want to copy dirs with such name at all)
---exclude-files - after this param following many file pathes, they can be absolute, relative, or just as name(for cases if you don't want to copy files with such name at all)
+./cpdi \
+    --src-directory "/media/user/disk/folder_1" \
+    --dst-directory /home/user/Desktop/dst_dir \
+    --min-file-size 100M \
+    --max-file-size 1G \
+    --exclude-dir-path inner_folder_1:folder_1/inner_folder_2 \
+	--exclude-file-path some_folder/file1.txt \
+    --exclude-common-names any_name:file_name_1:dir_name_1 \
+    --verbose
 ```
 
