@@ -23,7 +23,7 @@ type CopyingConfiguration struct {
 	ExcludedCommonPathes []string
 }
 
-func (cc *CopyingConfiguration) ParseArgs() {
+func (cc *CopyingConfiguration) ParseArgs() bool {
 	flag.BoolVar(&cc.Verbose, "verbose", false, "-v=1 | -v=0 | -v | -v=true | -v=F")
 
 	var (
@@ -50,7 +50,7 @@ func (cc *CopyingConfiguration) ParseArgs() {
 	flag.Parse()
 
 	if *srcDirRelPath == "" || *dstDirRelPath == "" {
-		log.Fatal("pls configure src-directory and dst-directory params")
+		return false
 	}
 
 	var err error
@@ -65,8 +65,8 @@ func (cc *CopyingConfiguration) ParseArgs() {
 	cc.MinFileSize = mustParseFileSize(*minFileSizeStrFlag)
 	cc.MaxFileSize = mustParseFileSize(*maxFileSizeStrFlag)
 
-	cc.ExcludedDirPathes = ConverStringPathToAbsPathList(excludedDirPathListFlag, cc.SrcDirAbsPath)
-	cc.ExludedFilePathes = ConverStringPathToAbsPathList(excludedFilePathListFlag, cc.SrcDirAbsPath)
+	cc.ExcludedDirPathes = ConvertStrToAbsPathList(excludedDirPathListFlag, cc.SrcDirAbsPath)
+	cc.ExludedFilePathes = ConvertStrToAbsPathList(excludedFilePathListFlag, cc.SrcDirAbsPath)
 	cc.ExcludedCommonPathes = filepath.SplitList(*excludeCommonNamesListFlag)
 
 	success, errors := checkPathes(cc.ExcludedDirPathes, cc.ExludedFilePathes)
@@ -76,6 +76,8 @@ func (cc *CopyingConfiguration) ParseArgs() {
 		}
 		os.Exit(1)
 	}
+
+	return true
 }
 
 func (cc CopyingConfiguration) String() string {
@@ -99,8 +101,8 @@ func (cc CopyingConfiguration) String() string {
 	)
 }
 
-func ConverStringPathToAbsPathList(pathString *string, srcDirBasePath string) []string {
-	var pathList []string = filepath.SplitList(*pathString)
+func ConvertStrToAbsPathList(multiPathStr *string, srcDirBasePath string) []string {
+	var pathList []string = filepath.SplitList(*multiPathStr)
 	addBasePathIfNeeds(pathList, srcDirBasePath)
 	return pathList
 }
@@ -109,7 +111,7 @@ func addBasePathIfNeeds(pathList []string, srcDirBasePath string) {
 	for i := range pathList {
 		var err error
 
-		// случай когда относительный путь включает название директории источника, ex. data_1/folder_1/folder_2
+		// todo: case when rel path includes source dir name, ex. data_1/folder_1/folder_2
 		if strings.HasPrefix(pathList[i], filepath.Base(srcDirBasePath)) {
 			pathList[i], err = filepath.Abs(pathList[i])
 			if err != nil {
@@ -117,20 +119,20 @@ func addBasePathIfNeeds(pathList []string, srcDirBasePath string) {
 			}
 		}
 
-		// случай, когда относительный путь указан без лишнего указания исходной директории, ex. folder_1/folder_2
+		// случай, когда относительный путь указан без доп. указания исходной директории, ex. folder_1/folder_2
 		if !filepath.IsAbs(pathList[i]) {
 			pathList[i] = filepath.Join(srcDirBasePath, pathList[i])
-		}
+		} // todo: эта фича - баг! она не позволит исключить директорию с таким же именем как у директории источника!
 
 	}
 }
 
 func checkPathes(pathLists ...[]string) (success bool, errors map[string]error) {
 	errors = make(map[string]error)
-	for _, pathes := range pathLists {
-		for i := range pathes {
-			if _, err := os.Stat(pathes[i]); err != nil {
-				errors[pathes[i]] = err
+	for _, pathList := range pathLists {
+		for i := range pathList {
+			if _, err := os.Stat(pathList[i]); err != nil {
+				errors[pathList[i]] = err
 			}
 		}
 	}
@@ -151,10 +153,10 @@ func mustParseFileSize(value string) int64 {
 		return 0
 	}
 	var (
-		fileSizeStr []string = regexp.MustCompile(`(\d+)([BKMGT])`).FindStringSubmatch(value)
-		ratio       int64
+		fileSizeMatchGroup []string = regexp.MustCompile(`(\d+)([BKMGT])`).FindStringSubmatch(value)
+		ratio              int64
 	)
-	switch fileSizeStr[2] {
+	switch fileSizeMatchGroup[2] {
 	case "B":
 		ratio = 1
 	case "K":
@@ -166,7 +168,7 @@ func mustParseFileSize(value string) int64 {
 	case "T":
 		ratio = int64(math.Pow(2.0, 40.0))
 	}
-	paramValue, err := strconv.ParseInt(fileSizeStr[1], 10, 64)
+	paramValue, err := strconv.ParseInt(fileSizeMatchGroup[1], 10, 64)
 	if err != nil {
 		log.Fatalf("mustParseFileSize: %v", err)
 	}
