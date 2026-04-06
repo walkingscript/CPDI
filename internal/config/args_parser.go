@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
-	"strings"
 )
 
 type CopyingConfiguration struct {
@@ -109,21 +108,10 @@ func ConvertStrToAbsPathList(multiPathStr *string, srcDirBasePath string) []stri
 
 func addBasePathIfNeeds(pathList []string, srcDirBasePath string) {
 	for i := range pathList {
-		var err error
-
-		// todo: case when rel path includes source dir name, ex. data_1/folder_1/folder_2
-		if strings.HasPrefix(pathList[i], filepath.Base(srcDirBasePath)) {
-			pathList[i], err = filepath.Abs(pathList[i])
-			if err != nil {
-				log.Fatalf("не удалось применить функцию filepath.Abs: %v", err)
-			}
-		}
-
-		// случай, когда относительный путь указан без доп. указания исходной директории, ex. folder_1/folder_2
+		// converting to absoulte path if it is not absulute yet
 		if !filepath.IsAbs(pathList[i]) {
 			pathList[i] = filepath.Join(srcDirBasePath, pathList[i])
-		} // todo: эта фича - баг! она не позволит исключить директорию с таким же именем как у директории источника!
-
+		}
 	}
 }
 
