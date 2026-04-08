@@ -15,11 +15,6 @@ import (
 var params config.CopyingConfiguration
 
 func main() {
-	os.Mkdir(params.DstDirAbsPath, 0777)
-	CopyDir(params.SrcDirAbsPath)
-}
-
-func init() {
 	if !params.ParseArgs() {
 		fmt.Print(config.HelpString)
 		os.Exit(0)
@@ -27,6 +22,8 @@ func init() {
 	if params.Verbose {
 		fmt.Print(params)
 	}
+	os.Mkdir(params.DstDirAbsPath, 0777)
+	CopyDir(params.SrcDirAbsPath)
 }
 
 func CopyDir(absSrcPath string) {
